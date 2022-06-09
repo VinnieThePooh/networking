@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Udp.MulticastSend", "Udp.MulticastSend\Udp.MulticastSend.csproj", "{6E59DD83-154E-4A5D-A220-08D21389BB65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Udp.MulticastReceive", "Udp.MulticastReceive\Udp.MulticastReceive.csproj", "{461AE71E-6AE1-48CC-8A6A-ADBDDF3EBFB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sockets.Common", "Sockets.Common\Sockets.Common.csproj", "{9A169E7F-D8B7-4F9C-A146-8682444CE6F0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E59DD83-154E-4A5D-A220-08D21389BB65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E59DD83-154E-4A5D-A220-08D21389BB65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E59DD83-154E-4A5D-A220-08D21389BB65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E59DD83-154E-4A5D-A220-08D21389BB65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{461AE71E-6AE1-48CC-8A6A-ADBDDF3EBFB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{461AE71E-6AE1-48CC-8A6A-ADBDDF3EBFB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{461AE71E-6AE1-48CC-8A6A-ADBDDF3EBFB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{461AE71E-6AE1-48CC-8A6A-ADBDDF3EBFB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A169E7F-D8B7-4F9C-A146-8682444CE6F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A169E7F-D8B7-4F9C-A146-8682444CE6F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A169E7F-D8B7-4F9C-A146-8682444CE6F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A169E7F-D8B7-4F9C-A146-8682444CE6F0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
