@@ -37,7 +37,7 @@ try
     {
         var result = await sock.ReceiveFromAsync(packet, SocketFlags.None, receiveEndpoint);
         var quote = decoder.Decode(packet);
-        DummyLogger.Log($"Group received a quote packet: ({result} bytes)");
+        DummyLogger.Log($"Group received a quote packet: ({result.ReceivedBytes} bytes)");
         Console.WriteLine(quote);
         cts.Token.ThrowIfCancellationRequested();
     }
