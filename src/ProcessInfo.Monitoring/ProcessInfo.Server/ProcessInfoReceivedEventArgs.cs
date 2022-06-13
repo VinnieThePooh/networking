@@ -1,5 +1,6 @@
 ﻿using ProcessInfo.Server.Enums;
 using System;
+using System.Collections.Generic;
 
 namespace ProcessInfo.Server
 {
@@ -11,7 +12,7 @@ namespace ProcessInfo.Server
             NotificationMode = NotificationMode.Single;
         }
 
-        public ProcessInfoReceivedEventArgs(string[] processInfos)
+        public ProcessInfoReceivedEventArgs(IEnumerable<string> processInfos)
         {
             ProcessInfos = processInfos;
             NotificationMode = NotificationMode.Batch;
@@ -20,7 +21,7 @@ namespace ProcessInfo.Server
 
         public string ProcessInfo { get; }
 
-        public string[] ProcessInfos { get; set; }
+        public IEnumerable<string> ProcessInfos { get; set; }
 
         public NotificationMode NotificationMode { get; }
 

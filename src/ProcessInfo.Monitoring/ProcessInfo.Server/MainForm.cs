@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ProcessInfo.Server.Settings;
 using System.Net;
+using ProcessInfo.Server.Enums;
 
 namespace ProcessInfo.Server
 {
@@ -33,7 +34,13 @@ namespace ProcessInfo.Server
 
         private void Server_ProcessInfoReceived(object? sender, ProcessInfoReceivedEventArgs e)
         {
-            richTextBox1.AppendText($"{e.ProcessInfo}\n");
+            switch (server.Settings.NotificationMode)
+            {
+                case NotificationMode.Single:
+                    richTextBox1.AppendText($"{e.ProcessInfo}\n");break;
+                case NotificationMode.Batch:
+                    richTextBox1.AppendText($"{string.Join("\n", e.ProcessInfos)}");break;
+            }
         }
 
         private async void MainForm_Load(object sender, EventArgs e)

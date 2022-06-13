@@ -1,6 +1,9 @@
-﻿using ProcessInfo.Server.Settings;
+﻿using ProcessInfo.Server.Enums;
+using ProcessInfo.Server.Settings;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -18,6 +21,8 @@ namespace ProcessInfo.Server
         private Socket serverSocket;
         private Socket clientSocket;
         private int counter = 0;
+
+        private List<string> internalBatch = new List<string>();
 
         public ProcessInfoServer(ServerSettings settings)
         {
@@ -45,6 +50,8 @@ namespace ProcessInfo.Server
             }
 
             clientSocket = serverSocket.Accept();
+            var remoteEp = (IPEndPoint)clientSocket.RemoteEndPoint;
+            Console.WriteLine($"Connnected client: {remoteEp.Address}:{remoteEp.Port}");
 
             Memory<byte> memory = null;
             Memory<byte> leftMemory = Memory<byte>.Empty;
@@ -62,7 +69,7 @@ namespace ProcessInfo.Server
                     memory = new Memory<byte>(new byte[4096]);
                     offset = !leftMemory.IsEmpty ? leftMemory.Length : 0;
                     Debug.WriteLine($"{++counter}. leftMemory.Length: {leftMemory.Length}");
-                    leftMemory.CopyTo(memory);                    
+                    leftMemory.CopyTo(memory);                 
 
                     readInitial = await clientSocket.ReceiveAsync(memory[offset..], SocketFlags.None, cts.Token);
                 }
@@ -77,6 +84,13 @@ namespace ProcessInfo.Server
                 {
                     //client disconnected prematurely
                     //add message here
+
+                    if (internalBatch.Any())
+                    {
+                        ProcessInfoReceived?.Invoke(this, new ProcessInfoReceivedEventArgs(internalBatch));
+                        internalBatch.Clear();
+                    }
+
                     cts.Cancel();
                     break;
                 }                                  
@@ -84,7 +98,7 @@ namespace ProcessInfo.Server
 
                 try
                 {                                      
-                    (succeeded, leftMemory, nextLength)  = TryReadMessages(memory, readInitial, nextLength);             
+                    (succeeded, leftMemory, nextLength)  = TryReadMessages(memory[0..(offset+readInitial)], readInitial, nextLength);             
                 }
                 catch (Exception e)
                 {
@@ -99,33 +113,62 @@ namespace ProcessInfo.Server
         private (bool Succeeded, Memory<byte> LeftMemory, int NextDataLength) TryReadMessages(Memory<byte> buffer, int readBytes, int nextLength)
         {
             int offset = 0;
-            var length =  nextLength != 0 ? nextLength: IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer[offset..4].ToArray()));
+            var length = 0;
+
+            if (nextLength != 0)
+            {
+                length = nextLength;
+            }
+            else
+            {
+                length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer[offset..4].ToArray()));
+                offset = 4; 
+            }
+
+            Debug.WriteLine($"Offset: {offset}. Bytes read: {readBytes}. Buffer length: {buffer.Length}");
 
             if (readBytes == 4)
                 return (false, Memory<byte>.Empty, length);
-
-            offset = nextLength != 0 ? 0 : 4;
+            
             var end = offset + length;
 
-            while (end < readBytes)
+            while (end < buffer.Length)
             {
                 var message = Encoding.UTF8.GetString(buffer[offset..end].Span);
                 Console.WriteLine($"[{DateTime.Now}]: {++counter}. Message received: {message}");
-                ProcessInfoReceived?.Invoke(this, new ProcessInfoReceivedEventArgs (message));
+
+                if (Settings.NotificationMode == NotificationMode.Batch)
+                {
+                    internalBatch.Add(message);
+                    if (internalBatch.Count % Settings.NotificationBatchSize == 0)
+                    {
+                        ProcessInfoReceived?.Invoke(this, new ProcessInfoReceivedEventArgs(internalBatch));
+                        internalBatch.Clear();
+                    }
+                }
+                else
+                {
+                    ProcessInfoReceived?.Invoke(this, new ProcessInfoReceivedEventArgs(message));
+                }            
 
                 offset = end;
-                if (offset + 4 < readBytes)
+                if (offset + 4 < buffer.Length)
                 {                    
                     length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer[offset..(offset+4)].ToArray()));
+                    if (length > 100)
+                        Debugger.Break();
                     offset = offset + 4;
                     end = offset + length;
                 }
                 else
                 {
-                    return (true, buffer.Slice(offset, readBytes - offset), 0);
+                    return (true, buffer.Slice(offset, buffer.Length - offset), 0);
                 }                
             }
-            return (true, buffer.Slice(offset, readBytes - offset), offset + 4 < readBytes ? length : 0);
+
+            if (end > buffer.Length)
+                return (true, buffer.Slice(offset, buffer.Length - offset), length);
+            return (true, Memory<byte>.Empty, 0);
         }
 
         public Task StopListening()

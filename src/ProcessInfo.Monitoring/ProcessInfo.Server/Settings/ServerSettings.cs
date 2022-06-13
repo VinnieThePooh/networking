@@ -8,6 +8,8 @@ namespace ProcessInfo.Server.Settings
 
         public int ServerPort { get; set; }
 
-        public NotificationMode NotificationMode { get; set; } = NotificationMode.Single;
+        public NotificationMode NotificationMode { get; set; } = NotificationMode.Batch;
+
+        public int NotificationBatchSize { get; set; } = 50;
     }
 }
