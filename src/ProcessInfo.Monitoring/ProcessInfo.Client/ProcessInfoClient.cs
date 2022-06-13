@@ -42,8 +42,7 @@ namespace ProcessInfo.Client
             }
 
             while (!cts.IsCancellationRequested)
-            {
-                Console.WriteLine();
+            {                
                 Process[] processes = Process.GetProcesses();
                 Console.WriteLine($"[{DateTime.Now}]: {processes.Length} processes detected on a client machine");
                 string message;
@@ -55,9 +54,11 @@ namespace ProcessInfo.Client
                     var length = IPAddress.HostToNetworkOrder(messageBytes.Length);
                     try
                     {
-                        await clientSocket.SendAsync(BitConverter.GetBytes(length), SocketFlags.None, cts.Token);
+                        var lengthBytes = BitConverter.GetBytes(length);
+
+                        await clientSocket.SendAsync(lengthBytes, SocketFlags.None, cts.Token);
                         await clientSocket.SendAsync(messageBytes, SocketFlags.None, cts.Token);
-                        Console.WriteLine($"[{DateTime.Now}]: {i++}.Sent data to server (4 + {messageBytes.Length} bytes)");
+                        Console.WriteLine($"[{DateTime.Now}]: {i++}.Sent data to server (4 + {messageBytes.Length} bytes): {message}");
                     }
                     catch (OperationCanceledException e)
                     {
