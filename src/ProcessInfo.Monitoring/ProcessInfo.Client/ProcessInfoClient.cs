@@ -67,7 +67,7 @@ public class ProcessInfoClient : IDisposable
                     await clientSocket.SendAsync(messageBytes, SocketFlags.None, cts.Token);
                     totalSent += (ulong)(4 + messageBytes.Length);
                     Console.WriteLine(
-                        $"[{DateTime.Now}]:\t\t{i++}.Sent data to server (4 + {messageBytes.Length} bytes): {message}");
+                        $"[{DateTime.Now}]:\t{i++}.Sent data to server (4 + {messageBytes.Length} bytes): {message}");
                 }
                 catch (OperationCanceledException e)
                 {
@@ -94,13 +94,8 @@ public class ProcessInfoClient : IDisposable
 
             var endMessage = await SendEndMessage(totalSent, processes.Length);
             Console.WriteLine(endMessage);
-            Console.WriteLine(new string('-', endMessage.Length) + "\n");
-            clientSocket.Shutdown(SocketShutdown.Send);
-            cts.Cancel();
-
-            break;
-
-            //await Task.Delay(TimeSpan.FromSeconds(Settings.SendInterval));
+            Console.WriteLine($"{new string('-', endMessage.Length)}\n");
+            await Task.Delay(TimeSpan.FromSeconds(Settings.SendInterval), cts.Token);
         }
     }
 
@@ -113,8 +108,8 @@ public class ProcessInfoClient : IDisposable
         var length = IPAddress.HostToNetworkOrder(endMessageBytes.Length);
         var lengthBytes = BitConverter.GetBytes(length);
 
-        // await clientSocket.SendAsync(lengthBytes, SocketFlags.None, cts.Token);
-        // await clientSocket.SendAsync(endMessageBytes, SocketFlags.None, cts.Token);
+        var lsent = await clientSocket.SendAsync(lengthBytes, SocketFlags.None, cts.Token);
+        var bsent = await clientSocket.SendAsync(endMessageBytes, SocketFlags.None, cts.Token);
 
         return transEndMessage;
     }

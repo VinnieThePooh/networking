@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ProcessInfo.Server.Enums;
@@ -14,7 +15,6 @@ namespace ProcessInfo.Server
 {
     public class ProcessInfoServer : IDisposable
     {
-        private readonly List<string> allMessages = new();
         private Socket clientSocket;
         private int counter;
         private CancellationTokenSource cts;
@@ -43,6 +43,8 @@ namespace ProcessInfo.Server
 
             var tcpEndPoint = new IPEndPoint(IPAddress.Parse(Settings.ServerAddress), Settings.ServerPort);
             var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            Console.WriteLine($"Server settings: {JsonSerializer.Serialize(Settings)}");
 
             try
             {
@@ -94,7 +96,6 @@ namespace ProcessInfo.Server
                 if (readInitial == 0)
                 {
                     //client disconnected prematurely
-
                     if (internalBatch.Any())
                     {
                         ProcessInfoReceived?.Invoke(this, new ProcessInfoReceivedEventArgs(internalBatch));
@@ -134,12 +135,16 @@ namespace ProcessInfo.Server
             while (end < buffer.Length)
             {
                 var message = Encoding.UTF8.GetString(buffer[offset..end].Span);
-                allMessages.Add(message);
 
+                //todo: message not shown..
                 if (message.Contains("Transmission completed."))
-                    Debugger.Break();
-
-                Console.WriteLine($"[{DateTime.Now}]: {++counter}. Message received: {message}");
+                {
+                    var endMessage = $"[{DateTime.Now}]: {message}";
+                    Console.WriteLine(endMessage);
+                    Console.WriteLine($"{new string('-', endMessage.Length)}\n");
+                }
+                else
+                    Console.WriteLine($"[{DateTime.Now}]: {++counter}. Message received: {message}");
 
                 if (Settings.NotificationMode == NotificationMode.Batch)
                 {
