@@ -1,22 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using ProcessInfo.Server.Settings;
 using System.Net;
+using System.Net.Sockets;
+using System.Windows.Forms;
 using ProcessInfo.Server.Enums;
+using ProcessInfo.Server.Settings;
 
 namespace ProcessInfo.Server
 {
     public partial class MainForm : Form
     {
-        ProcessInfoServer server;
+        private readonly ProcessInfoServer server;
 
         public MainForm(ServerSettings settings)
         {
@@ -37,9 +31,13 @@ namespace ProcessInfo.Server
             switch (server.Settings.NotificationMode)
             {
                 case NotificationMode.Single:
-                    richTextBox1.AppendText($"{e.ProcessInfo}\n");break;
+                    richTextBox1.AppendText($"{e.ProcessInfo}\n");
+
+                    break;
                 case NotificationMode.Batch:
-                    richTextBox1.AppendText($"{string.Join("\n", e.ProcessInfos)}");break;
+                    richTextBox1.AppendText($"{string.Join("\n", e.ProcessInfos)}");
+
+                    break;
             }
         }
 
