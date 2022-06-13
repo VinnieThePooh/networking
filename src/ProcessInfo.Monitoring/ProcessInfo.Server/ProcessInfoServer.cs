@@ -154,9 +154,7 @@ namespace ProcessInfo.Server
                 offset = end;
                 if (offset + 4 < buffer.Length)
                 {                    
-                    length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer[offset..(offset+4)].ToArray()));
-                    if (length > 100)
-                        Debugger.Break();
+                    length = IPAddress.NetworkToHostOrder(BitConverter.ToInt32(buffer[offset..(offset+4)].ToArray()));                    
                     offset = offset + 4;
                     end = offset + length;
                 }
