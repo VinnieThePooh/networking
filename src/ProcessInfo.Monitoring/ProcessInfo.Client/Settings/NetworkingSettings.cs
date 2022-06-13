@@ -6,10 +6,6 @@
 
         public int ServerPort { get; set; }
 
-        public string ClientAddress { get; set; }
-
-        public int ClientPort { get; set; }
-
         //in seconds
         public int SendInterval { get; set; } = 10;
     }

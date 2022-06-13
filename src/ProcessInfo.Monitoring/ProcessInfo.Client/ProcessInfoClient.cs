@@ -15,7 +15,7 @@ namespace ProcessInfo.Client
 
         private CancellationTokenSource cts;
 
-        private Socket clientSocket;
+        private Socket clientSocket;                
 
         public ProcessInfoClient(NetworkingSettings settings)
         {
@@ -24,28 +24,27 @@ namespace ProcessInfo.Client
 
         public async Task StartSendingInfo()
         {
-            cts = new CancellationTokenSource();
-
-            var tcpEndPoint = new IPEndPoint(IPAddress.Parse(Settings.ClientAddress), Settings.ClientPort);
+            cts = new CancellationTokenSource();            
             clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            ulong totalSent;
 
             try
-            {
-                clientSocket.Bind(tcpEndPoint);
+            {                
                 var remoteEndpoint = new IPEndPoint(IPAddress.Parse(Settings.ServerAddress), Settings.ServerPort);
                 await clientSocket.ConnectAsync(remoteEndpoint);
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Could not connect to {Settings.ClientAddress}:{Settings.ServerPort}:");
+                Console.WriteLine($"Could not connect to {Settings.ServerAddress}:{Settings.ServerPort}:");
                 Console.WriteLine(e.ToString());
             }
 
             while (!cts.IsCancellationRequested)
-            {                
+            {
+                totalSent = 0;
                 Process[] processes = Process.GetProcesses();
                 Console.WriteLine($"[{DateTime.Now}]: {processes.Length} processes detected on a client machine");
-                string message;
+                string message;                
                 int i = 1;
                 foreach (var process in processes)
                 {
@@ -58,25 +57,51 @@ namespace ProcessInfo.Client
 
                         await clientSocket.SendAsync(lengthBytes, SocketFlags.None, cts.Token);
                         await clientSocket.SendAsync(messageBytes, SocketFlags.None, cts.Token);
+                        totalSent += (ulong)(4 + messageBytes.Length);
                         Console.WriteLine($"[{DateTime.Now}]: {i++}.Sent data to server (4 + {messageBytes.Length} bytes): {message}");
                     }
                     catch (OperationCanceledException e)
                     {
                         Console.WriteLine("Cancelled sending data");
+                        cts.Cancel();
+                        break;
                     }
                     catch (SocketException se)
                     {
                         Console.WriteLine(se.Message);
+                        cts.Cancel();
                         break;
                     }
                     catch (Exception e)
-                    {
-                        Console.WriteLine($"Could not connect to {Settings.ClientAddress}:{Settings.ServerPort}:");
+                    {                                             
                         Console.WriteLine(e.ToString());
-                    }                                        
+                        cts.Cancel();
+                        break;
+                    }                    
                 }
+
+                var endMessage = await SendEndMessage(totalSent, processes.Length);
+                Console.WriteLine(endMessage);
+                Console.WriteLine(new string('-',endMessage.Length) + "\n");
+                //clientSocket.Shutdown(SocketShutdown.Send);
+                //break;
+                //cts.Cancel();
+
                 await Task.Delay(TimeSpan.FromSeconds(Settings.SendInterval));
             }
+        }
+
+        private async Task<string> SendEndMessage(ulong totalBytesSent, int processesCount)
+        {
+            var transEndMessage = $"Transmission completed. Processes captured: {processesCount}. Total bytes sent: {totalBytesSent}";            
+            var endMessageBytes = Encoding.UTF8.GetBytes(transEndMessage);
+
+            var length = IPAddress.HostToNetworkOrder(endMessageBytes.Length);
+            var lengthBytes = BitConverter.GetBytes(length);
+
+            //await clientSocket.SendAsync(lengthBytes, SocketFlags.None, cts.Token);
+            //await clientSocket.SendAsync(endMessageBytes, SocketFlags.None, cts.Token);
+            return transEndMessage;
         }
 
         public Task StopSendingInfo()
