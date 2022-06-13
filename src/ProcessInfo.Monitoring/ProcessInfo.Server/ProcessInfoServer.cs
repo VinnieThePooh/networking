@@ -1,11 +1,11 @@
-﻿using System;
+﻿using ProcessInfo.Server.Settings;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ProcessInfo.Server.Settings;
 
 namespace ProcessInfo.Server
 {
@@ -52,14 +52,19 @@ namespace ProcessInfo.Server
             int readInitial = 0;
             bool succeeded;
             int nextLength = 0;
+            int offset = 0;
+            int counter = 0;
 
             while (!cts.IsCancellationRequested)
             {
                 try
                 {   
                     memory = new Memory<byte>(new byte[4096]);
-                    leftMemory.CopyTo(memory);
-                    readInitial = await clientSocket.ReceiveAsync(memory, SocketFlags.None, cts.Token);
+                    offset = !leftMemory.IsEmpty ? leftMemory.Length : 0;
+                    Debug.WriteLine($"{++counter}. leftMemory.Length: {leftMemory.Length}");
+                    leftMemory.CopyTo(memory);                    
+
+                    readInitial = await clientSocket.ReceiveAsync(memory[offset..], SocketFlags.None, cts.Token);
                 }
                 catch (SocketException e)
                 {
@@ -79,8 +84,7 @@ namespace ProcessInfo.Server
 
                 try
                 {                                      
-                    (succeeded, leftMemory, nextLength)  = TryReadMessages(memory, readInitial, nextLength);            
-
+                    (succeeded, leftMemory, nextLength)  = TryReadMessages(memory, readInitial, nextLength);             
                 }
                 catch (Exception e)
                 {

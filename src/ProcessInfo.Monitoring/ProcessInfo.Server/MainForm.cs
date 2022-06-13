@@ -42,6 +42,10 @@ namespace ProcessInfo.Server
             {
                 await server.StartListening();
             }
+            catch (OperationCanceledException oce)
+            {
+                Console.WriteLine("Cancelled listening");
+            }
             catch (ProtocolViolationException pve)
             {
                 Console.WriteLine(pve.Message);
